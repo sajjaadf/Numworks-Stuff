@@ -1,0 +1,30 @@
+#include "regression_context.h"
+#include <assert.h>
+#include <string.h>
+
+using namespace Poincare;
+using namespace Shared;
+
+namespace Regression {
+
+const Expression * RegressionContext::expressionForSymbol(const Symbol * symbol) {
+  if (Symbol::isRegressionSymbol(symbol->name())) {
+    const char * seriesName = Symbol::textForSpecialSymbols(symbol->name());
+    assert(strlen(seriesName) == 2);
+
+    int series = (int)(seriesName[1] - '0') - 1;
+    assert(series >= 0 && series < DoublePairStore::k_numberOfSeries);
+
+    assert((seriesName[0] == 'X') || (seriesName[0] == 'Y'));
+    int storeI = seriesName[0] == 'X' ? 0 : 1;
+
+    assert(m_seriesPairIndex >= 0);
+    assert(m_seriesPairIndex < m_store->numberOfPairsOfSeries(series));
+    m_value = Approximation<double>(m_store->get(series, storeI, m_seriesPairIndex));
+    return &m_value;
+  } else {
+    return m_parentContext->expressionForSymbol(symbol);
+  }
+}
+
+}
